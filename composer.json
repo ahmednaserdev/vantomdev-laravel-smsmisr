@@ -1,0 +1,27 @@
+{
+    "name": "vantomdev/smsmisr",
+    "description": "OTP and SMS API integration for SmsMisr",
+    "type": "library",
+    "require": {
+        "php": ">=8.1",
+        "guzzlehttp/guzzle": "^7.5",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "VantomDev\\SmsMisr\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "VantomDev\\SmsMisr\\SmsMisrServiceProvider"
+            ],
+            "aliases": {
+                "SmsMisr": "VantomDev\\SmsMisr\\Facades\\SmsMisr"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
