@@ -2,6 +2,7 @@
     "name": "vantomdev/smsmisr",
     "description": "OTP and SMS API integration for SmsMisr",
     "type": "library",
+    "license": "MIT",
     "require": {
         "php": ">=8.1",
         "guzzlehttp/guzzle": "^7.5",
