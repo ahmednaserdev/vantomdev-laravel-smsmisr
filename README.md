@@ -122,7 +122,7 @@ use VantomDev\SmsMisr\Facades\SmsMisr;
 use VantomDev\SmsMisr\Exceptions\SmsMisrException;
 
 try {
-    $response = SmsMisr::sendSms('2011XXXXXXX', 'This is a test message.', 1);
+    $response = SmsMisr::sendSms('2011XXXXXXX', 'This is a test message.', 1); # 1 For English , 2 For Arabic , 3 For Unicode
     return back()->with('success', __('smsmisr::messages.success'));
 } catch (SmsMisrException $e) {
     return back()->with('error', $e->getMessage());
