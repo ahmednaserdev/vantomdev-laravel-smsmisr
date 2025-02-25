@@ -207,7 +207,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For any issues, please create an issue on the [GitHub Repository](https://github.com/vantomdev/laravel-smsmisr/issues).
+For any issues, please create an issue on the [GitHub Repository](https://github.com/ahmednaserdev/vantomdev-laravel-smsmisr/issues).
 
 ---
 
