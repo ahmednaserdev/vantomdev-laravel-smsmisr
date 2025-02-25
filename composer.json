@@ -3,6 +3,7 @@
     "description": "OTP and SMS API integration for SmsMisr",
     "type": "library",
     "license": "MIT",
+    "version": "1.1.0",
     "require": {
         "php": ">=8.1",
         "guzzlehttp/guzzle": "^7.5",
