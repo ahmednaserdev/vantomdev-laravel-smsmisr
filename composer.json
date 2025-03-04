@@ -24,6 +24,9 @@
             }
         }
     },
+    "include-path": [
+        "resources/lang"
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }
