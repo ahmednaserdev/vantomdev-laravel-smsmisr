@@ -12,9 +12,12 @@ use VantomDev\SmsMisr\Handlers\ResponseHandler;
 
 class SmsMisrService implements SmsServiceInterface
 {
+    protected string $baseUrlOtp;
+    protected string $baseUrlSms;
     protected string $username;
     protected string $password;
     protected string $sender;
+    protected string $template;
     protected string $environment;
     protected Client $client;
 
@@ -22,104 +25,92 @@ class SmsMisrService implements SmsServiceInterface
      * SmsMisrService Constructor
      *
      * @param Client $client
+     * @param string $baseUrlOtp
+     * @param string $baseUrlSms
      * @param string $username
      * @param string $password
      * @param string $sender
+     * @param string $template
      * @param string $environment
      */
-    public function __construct(Client $client, string $username, string $password, string $sender, string $environment)
+    public function __construct(Client $client, string $baseUrlOtp, string $baseUrlSms, string $username, string $password, string $sender, string $template, string $environment)
     {
+        $this->client      = $client;
+        $this->baseUrlOtp  = $baseUrlOtp;
+        $this->baseUrlSms  = $baseUrlSms;
         $this->username    = $username;
         $this->password    = $password;
         $this->sender      = $sender;
+        $this->template    = $template;
         $this->environment = $environment;
-        $this->client      = $client;
     }
 
     /**
      * Send OTP
-     *
-     * @param string $mobile
-     * @param string $template
-     * @param string $otp
-     * @return array
-     * @throws SmsMisrException
      */
-    public function sendOtp(string $mobile, string $template, string $otp): array
+    public function sendOtp(string $mobile, string $otp): array
     {
-        // Check for request limit
         if ($this->isRateLimited($mobile)) {
             throw new SmsMisrException('Too many requests. Please try again after 5 minutes.');
         }
 
-        try {
-            $response = $this->client->post('OTP/', [
-                'form_params' => [
-                    'environment' => $this->environment,
-                    'username'    => $this->username,
-                    'password'    => $this->password,
-                    'sender'      => $this->sender,
-                    'mobile'      => $mobile,
-                    'template'    => $template,
-                    'otp'         => $otp,
-                ],
-            ]);
+        $response = $this->sendRequest($this->baseUrlOtp, [
+            'mobile'   => $mobile,
+            'template' => $this->template,
+            'otp'      => $otp,
+        ]);
 
-            // Increment request counter
-            $this->incrementRequestCount($mobile);
+        $this->incrementRequestCount($mobile);
 
-            return $this->processResponse($response);
-        } catch (RequestException $e) {
-            Log::error('SmsMisr OTP Request Failed: ' . $e->getMessage());
-            throw new SmsMisrException('Failed to send OTP: ' . $e->getMessage());
-        }
+        return $response;
     }
 
     /**
      * Send SMS
-     *
-     * @param string $mobile
-     * @param string $message
-     * @param int $language
-     * @return array
-     * @throws SmsMisrException
      */
     public function sendSms(string $mobile, string $message, int $language = 1): array
     {
-        // Check for request limit
         if ($this->isRateLimited($mobile)) {
             throw new SmsMisrException('Too many requests. Please try again after 5 minutes.');
         }
 
-        try {
-            $response = $this->client->post('SMS/', [
-                'form_params' => [
-                    'environment' => $this->environment,
-                    'username'    => $this->username,
-                    'password'    => $this->password,
-                    'sender'      => $this->sender,
-                    'mobile'      => $mobile,
-                    'language'    => $language,
-                    'message'     => $message,
-                ],
-            ]);
+        $response = $this->sendRequest($this->baseUrlSms, [
+            'mobile'   => $mobile,
+            'language' => $language,
+            'message'  => $message,
+        ]);
 
-            // Increment request counter
-            $this->incrementRequestCount($mobile);
+        $this->incrementRequestCount($mobile);
+
+        return $response;
+    }
+
+    /**
+     * General function to send requests
+     */
+    private function sendRequest(string $url, array $extraParams): array
+    {
+        try {
+            $params = array_merge([
+                'environment' => $this->environment,
+                'username'    => $this->username,
+                'password'    => $this->password,
+                'sender'      => $this->sender,
+            ], $extraParams);
+
+            $response = $this->client->post($url, [
+                'form_params' => $params,
+            ]);
 
             return $this->processResponse($response);
         } catch (RequestException $e) {
-            Log::error('SmsMisr SMS Request Failed: ' . $e->getMessage());
-            throw new SmsMisrException('Failed to send SMS: ' . $e->getMessage());
+            Log::error("SmsMisr Request Failed: " . $e->getMessage());
+            throw new SmsMisrException("Failed to send request: " . $e->getMessage());
         }
     }
 
     /**
      * Process API Response
-     *
-     * @param ResponseInterface $response
-     * @return array
-     * @throws SmsMisrException
      */
     private function processResponse(ResponseInterface $response): array
     {
@@ -134,23 +125,22 @@ class SmsMisrService implements SmsServiceInterface
         return $result;
     }
 
-/**
- * Check if the mobile number is rate limited
- *
- * @param string $mobile
- * @return bool
- * @throws SmsMisrException
- */
+    /**
+     * Check if the mobile number is rate limited
+     */
     private function isRateLimited(string $mobile): bool
     {
-        $key          = 'smsmisr_rate_limit_' . $mobile;
-        $requestCount = Cache::get($key, 0);
+        if (! config('smsmisr.enable_rate_limit', true)) {
+            return false;
+        }
 
-        // If more than 3 requests in a minute, block for 5 minutes
-        if ($requestCount >= 3) {
-            Cache::put($key, $requestCount, now()->addMinutes(5));
+        $key           = 'smsmisr_rate_limit_' . $mobile;
+        $requestCount  = Cache::get($key, 0);
+        $maxRequests   = config('smsmisr.max_requests_per_minute', 3);
+        $blockDuration = config('smsmisr.block_duration', 5);
 
-            // Throw Exception with translated message
+        if ($requestCount >= $maxRequests) {
+            Cache::put($key, $requestCount, now()->addMinutes($blockDuration));
             throw new SmsMisrException(__('smsmisr::messages.rate_limited'));
         }
 
@@ -159,16 +149,17 @@ class SmsMisrService implements SmsServiceInterface
 
     /**
      * Increment the request counter for the mobile number
-     *
-     * @param string $mobile
-     * @return void
      */
     private function incrementRequestCount(string $mobile): void
     {
-        $key          = 'smsmisr_rate_limit_' . $mobile;
-        $requestCount = Cache::get($key, 0);
+        if (! config('smsmisr.enable_rate_limit', true)) {
+            return;
+        }
 
-        // Increment counter and reset after 1 minute
-        Cache::put($key, $requestCount + 1, now()->addMinute());
+        $key           = 'smsmisr_rate_limit_' . $mobile;
+        $requestCount  = Cache::get($key, 0);
+        $cacheDuration = now()->addMinute();
+
+        Cache::put($key, $requestCount + 1, $cacheDuration);
     }
 }
