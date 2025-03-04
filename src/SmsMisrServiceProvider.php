@@ -52,19 +52,19 @@ class SmsMisrServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Publish configuration file when running artisan commands
+        // Ensure the package translation files are loaded
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'smsmisr');
+    
         if ($this->app->runningInConsole()) {
+            // Publish configuration file
             $this->publishes([
                 __DIR__ . '/../config/smsmisr.php' => config_path('smsmisr.php'),
             ], 'config');
-
+    
             // Publish translation files
             $this->publishes([
                 __DIR__ . '/../resources/lang' => resource_path('lang/vendor/smsmisr'),
             ], 'lang');
         }
-
-        // Load package translations
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'smsmisr');
-    }
+    }    
 }
