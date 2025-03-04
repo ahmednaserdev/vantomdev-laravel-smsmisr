@@ -1,4 +1,5 @@
 <?php
+
 namespace VantomDev\SmsMisr;
 
 use GuzzleHttp\Client;
@@ -26,12 +27,14 @@ class SmsMisrServiceProvider extends ServiceProvider
         $this->app->bind(SmsServiceInterface::class, function ($app) {
             return new SmsMisrService(
                 new Client([
-                    'base_uri' => 'https://smsmisr.com/api/',
-                    'timeout'  => 5.0, // Set request timeout to 5 seconds
+                    'timeout' => 5.0, // Set request timeout to 5 seconds
                 ]),
+                config('smsmisr.base_url_otp'),
+                config('smsmisr.base_url_sms'),
                 config('smsmisr.username'),
                 config('smsmisr.password'),
                 config('smsmisr.sender'),
+                config('smsmisr.template_token'),
                 config('smsmisr.environment')
             );
         });
@@ -45,17 +48,8 @@ class SmsMisrServiceProvider extends ServiceProvider
     /**
      * Bootstrap services.
      *
-     * This method publishes the package configuration file
-     * to the application's config directory.
-     * It ensures the config is only published when running in the console.
-     *
      * @return void
      */
-/**
- * Bootstrap services.
- *
- * @return void
- */
     public function boot(): void
     {
         // Publish configuration file when running artisan commands
@@ -73,5 +67,4 @@ class SmsMisrServiceProvider extends ServiceProvider
         // Load package translations
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'smsmisr');
     }
-
 }

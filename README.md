@@ -1,10 +1,9 @@
-
 # Laravel SmsMisr 🚀
 
 A powerful Laravel package for integrating **SmsMisr** OTP and SMS APIs. This package supports multiple Laravel versions up to **12.x**, allowing easy and efficient management of SMS and OTP functionalities.
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/vantomdev/laravel-smsmisr/test.yml?branch=main)
-![Coverage](https://img.shields.io/codecov/c/github/vantomdev/laravel-smsmisr)
+![Build Status](https://img.shields.io/github/actions/workflow/status/ahmednaserdev/vantomdev-laravel-smsmisr/test.yml?branch=main)
+![Coverage](https://img.shields.io/codecov/c/github/ahmednaserdev/vantomdev-laravel-smsmisr)
 ![Packagist Version](https://img.shields.io/packagist/v/vantomdev/smsmisr)
 ![License](https://img.shields.io/packagist/l/vantomdev/smsmisr)
 
@@ -18,6 +17,7 @@ A powerful Laravel package for integrating **SmsMisr** OTP and SMS APIs. This pa
 - 🔒 **Rate Limiting** to prevent abuse and reduce costs (Max 3 messages per minute, block for 5 minutes).
 - 📘 **Detailed Localization Support** for multilingual websites.
 - 🔄 **Flexible configuration** for Live and Testing environments.
+- 🔧 **Customizable API URLs** for OTP and SMS requests.
 - 💎 **Seamless integration** with Laravel 8.x to 12.x.
 
 ---
@@ -59,23 +59,41 @@ SMSMISR_USERNAME=your_username
 SMSMISR_PASSWORD=your_password
 SMSMISR_SENDER=your_sender
 SMSMISR_ENV=2  # 1 for Live, 2 for Test
+
+# API Base URLs
+SMSMISR_BASE_URL_OTP=https://smsmisr.com/api/OTP/
+SMSMISR_BASE_URL_SMS=https://smsmisr.com/api/SMS/
+
+# Default Template Token
+SMSMISR_TEMPLATE_TOKEN=your_default_template_token
+
+# Rate Limiting (Optional)
+SMSMISR_RATE_LIMIT=true
+SMSMISR_MAX_REQUESTS=3
+SMSMISR_BLOCK_DURATION=5
 ```
 
 ---
 
 ## ⏰ Rate Limiting
 
-To prevent abuse and excessive costs, this package has built-in rate limiting:
+To prevent abuse and excessive costs, this package has built-in rate limiting.
 
 - Maximum of **3 messages per minute** per mobile number.
 - If exceeded, the user is **blocked for 5 minutes**.
-- Error message displayed using localization: 
+- Error message displayed using localization:
 
 ```php
 'Too many requests. Please try again after 5 minutes.'
 ```
 
-You can customize this message in your language files.
+You can customize this message in your language files or disable rate limiting by setting:
+
+```php
+'enable_rate_limit' => false,
+```
+
+in `config/smsmisr.php`.
 
 ---
 
@@ -108,7 +126,7 @@ use VantomDev\SmsMisr\Facades\SmsMisr;
 use VantomDev\SmsMisr\Exceptions\SmsMisrException;
 
 try {
-    $response = SmsMisr::sendOtp('2011XXXXXXX', 'template_token', '123456');
+    $response = SmsMisr::sendOtp('2011XXXXXXX', '123456');
     return back()->with('success', __('smsmisr::messages.success'));
 } catch (SmsMisrException $e) {
     return back()->with('error', $e->getMessage());
@@ -132,6 +150,11 @@ try {
 ---
 
 ## 🎨 Changelog
+
+### v1.2.0
+- **Added Configurable API URLs**: `base_url_otp` and `base_url_sms` are now customizable.
+- **Refactored ServiceProvider**: Improved Dependency Injection for better testability.
+- **Improved Rate Limiting**: Now configurable from `config/smsmisr.php` or `.env`.
 
 ### v1.1.0
 - **Added Rate Limiting**: Max 3 messages per minute, block for 5 minutes.
